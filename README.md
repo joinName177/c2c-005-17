@@ -1,10 +1,10 @@
 # c2c-005 · 声音表情包工坊
 
-Vue 3 + TypeScript + Vite 纯前端声音创作工具。支持最长 10 秒录音/导入、裁剪、声学特征情绪匹配、Canvas 封面、IndexedDB 本地作品集和系统文件分享。
+Vue 3 + TypeScript + Vite 纯前端声音创作工具。支持录音/导入长音频、声学候选片段推荐、试听微调、裁剪、声学特征情绪匹配、Canvas 封面、IndexedDB 本地作品集和系统文件分享。
 
 ## 架构
 
-- `src/core`：作品模型、特征归一化、情绪规则与封面预设
+- `src/core`：作品模型、候选片段推荐、特征归一化、情绪规则与封面预设
 - `src/ports`：录音、音频、Canvas、仓储与分享接口
 - `src/adapters`：MediaRecorder、Web Audio、Canvas、IndexedDB、Web Share 实现
 - `src/ui`：Vue 阶段式工作流和原生 CSS

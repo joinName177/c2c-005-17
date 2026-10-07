@@ -8,7 +8,7 @@ function dependencies(overrides: Partial<StudioDependencies> = {}): StudioDepend
   return {
     recorder: { isRecording: false, start: async () => {}, stop: async () => new Blob(['voice'], { type: 'audio/webm' }) },
     analyzer: { analyze: async () => ({ duration: 2, features: { loudness:.75,dynamics:.55,pitch:.8,zeroCrossing:.62,pauseRatio:.12,tempoVariation:.6 } }) },
-    cropper: { inspect: async () => ({duration:2,needsCrop:false}), crop: async (blob, range) => ({blob,duration:range.end-range.start}) },
+    cropper: { inspect: async () => ({duration:2,needsCrop:false,candidates:[]}), crop: async (blob, range) => ({blob,duration:range.end-range.start}) },
     renderer: { render: async () => new Blob(['cover'], { type: 'image/png' }) },
     repository: { list: async()=>saved, save: async(m)=>{saved.push(m)}, rename:async()=>{}, delete:async()=>{} },
     share: { share: async () => 'shared' },
@@ -27,6 +27,23 @@ describe('useStudio', () => {
     const studio = useStudio(dependencies()); await studio.startRecording(); await studio.stopRecording();
     expect(studio.stage.value).toBe('crop'); await studio.analyze(); expect(studio.emotion.value?.label).toBe('元气满满');
     studio.selectEmotion('温柔姐姐'); expect(studio.cover.value.label).toBe('温柔姐姐'); expect(studio.stage.value).toBe('emotion');
+  });
+  it('applies a recommendation but analyzes the manually adjusted range', async () => {
+    const candidate = { id: 'candidate-1', rank: 1, start: 2.34, end: 8.91, score: .8, reasons: ['边界前后有低能量间隔。'] };
+    let croppedRange: { start: number; end: number } | undefined;
+    const studio = useStudio(dependencies({
+      cropper: {
+        inspect: async () => ({ duration: 16, needsCrop: true, candidates: [candidate] }),
+        crop: async (blob, range) => { croppedRange = range; return { blob, duration: range.end - range.start }; },
+      },
+    }));
+    await studio.stopRecording();
+    expect(studio.selectedCandidateId.value).toBe('candidate-1');
+    expect(studio.draft.cropStart).toBe(2.34);
+    studio.draft.cropStart = 2.5;
+    studio.clearSelectedCandidate();
+    await studio.analyze();
+    expect(croppedRange).toEqual({ start: 2.5, end: 8.91 });
   });
   it('keeps the draft when saving fails and can edit an existing work', async () => {
     const studio = useStudio(dependencies({ repository: { list:async()=>[], save:async()=>{throw new DOMException('full','QuotaExceededError')}, rename:async()=>{}, delete:async()=>{} } }));

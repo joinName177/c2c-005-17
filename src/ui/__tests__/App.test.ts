@@ -9,7 +9,7 @@ function deps(options: { denied?: boolean } = {}): StudioDependencies {
   return {
     recorder:{isRecording:false,start:async()=>{if(options.denied)throw new DOMException('denied','NotAllowedError')},stop:async()=>new Blob(['voice'],{type:'audio/webm'})},
     analyzer:{analyze:async()=>({duration:2,features:{loudness:.75,dynamics:.55,pitch:.8,zeroCrossing:.62,pauseRatio:.12,tempoVariation:.6}})},
-    cropper:{inspect:async()=>({duration:2,needsCrop:false}),crop:async(blob,range)=>({blob,duration:range.end-range.start})},
+    cropper:{inspect:async()=>({duration:2,needsCrop:false,candidates:[]}),crop:async(blob,range)=>({blob,duration:range.end-range.start})},
     renderer:{render:async()=>new Blob(['cover'],{type:'image/png'})},
     repository:{list:async()=>works,save:async(m)=>{works.push(m)},rename:async()=>{},delete:async(id)=>{const i=works.findIndex(w=>w.id===id);if(i>=0)works.splice(i,1)}},
     share:{share:async()=> 'shared'},

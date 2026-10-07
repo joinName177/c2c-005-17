@@ -10,7 +10,7 @@ async function browserDecode(blob: Blob): Promise<DecodedAudio> {
   await context.close();
   return result;
 }
-function encodeWav(audio: DecodedAudio, range: CropRange) {
+export function encodeWavBytes(audio: DecodedAudio, range: CropRange): Uint8Array<ArrayBuffer> {
   const start = Math.floor(range.start * audio.sampleRate);
   const end = Math.floor(range.end * audio.sampleRate);
   const channels = audio.channels.map((channel) => channel.slice(start, end));
@@ -21,7 +21,10 @@ function encodeWav(audio: DecodedAudio, range: CropRange) {
   write(0, 'RIFF'); view.setUint32(4, 36 + length * channels.length * 2, true); write(8, 'WAVEfmt '); view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, channels.length, true); view.setUint32(24, audio.sampleRate, true); view.setUint32(28, audio.sampleRate * channels.length * 2, true); view.setUint16(32, channels.length * 2, true); view.setUint16(34, 16, true); write(36, 'data'); view.setUint32(40, length * channels.length * 2, true);
   let offset = 44;
   for (let i = 0; i < length; i += 1) for (const channel of channels) { const value = Math.max(-1, Math.min(1, channel[i] ?? 0)); view.setInt16(offset, value < 0 ? value * 32768 : value * 32767, true); offset += 2; }
-  return new Blob([buffer], { type: 'audio/wav' });
+  return new Uint8Array(buffer);
+}
+function encodeWav(audio: DecodedAudio, range: CropRange) {
+  return new Blob([encodeWavBytes(audio, range)], { type: 'audio/wav' });
 }
 export class WebAudioCropperAdapter implements AudioCropperPort {
   constructor(private readonly deps: Dependencies = { decode: browserDecode }) {}
